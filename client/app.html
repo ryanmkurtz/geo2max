@@ -1,0 +1,218 @@
+<html ng-app="client">
+<title>GeO&#8322; Max</title>
+<head>
+	<link type="image/png" rel="shortcut icon" href="images/favicon.png"/>
+
+	<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap/dist/css/bootstrap.min.css"/>
+	<link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.css"/>
+	<link type="text/css" rel="stylesheet" href="cesium/Widgets/widgets.css"></link>
+
+	<script src="//cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="//unpkg.com/babel-polyfill@latest/dist/polyfill.min.js"></script>
+	<script src="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.js"></script>
+	<script src="cesium/Cesium.js"></script>
+</head>
+
+<body style="background-color: #454d55">
+	<div id="app" style="overflow: hidden;">
+		<b-navbar toggleable="md" type="dark" variant="dark" fixed="top">
+			<b-navbar-brand href="https://www.geo2max.com">
+				<b-img src="images/geo2max_logo_long.png" width="162"></b-img>
+			</b-navbar-brand>
+			<b-navbar-nav class="mr-auto">
+				<b-img v-if="connectedToStrava"
+					src="images/api_logo_pwrdBy_strava_horiz_light.svg" 
+					nav-item 
+					width="162" height="30">
+				</b-img>
+				<b-img v-else 
+					@click="connectToStrava()" 
+					src="images/btn_strava_connectwith_orange.png"
+					nav-item
+					height="40"
+					style="cursor: pointer;">
+				</b-img>
+			</b-navbar-nav>
+			<b-navbar-nav class="ml-auto">
+				<b-nav-item>
+					<b-spinner small type="grow" variant="success" v-if="itemsLoading > 0"></b-spinner>
+				</b-nav-item>
+				&nbsp;
+				<b-dropdown @click="sync"
+					split
+					text="Sync"
+					:disabled="!connectedToStrava || itemsLoading > 0"
+					variant="success"/>
+					<b-dropdown-item @click="drop">Delete activity database</b-dropdown-item>
+				</b-dropdown>
+				&nbsp;&nbsp;&nbsp;
+				<b-button
+					@click="clear" 
+					:disabled="itemsLoading > 0"
+					variant="danger">
+					Clear
+				</b-button>
+				&nbsp;&nbsp;&nbsp;
+				<b-button
+					@click="previousActivityPage" 
+					:disabled="itemsLoading > 0 || activityPage == 1">
+					Prev
+				</b-button>
+				&nbsp;
+				<b-button
+					@click="nextActivityPage" 
+					:disabled="itemsLoading > 0 || activityPage * activitiesPerPage >= activitiesShown">
+					Next
+				</b-button>
+				&nbsp;&nbsp;&nbsp;
+				<b-form-input
+					@keyup.enter.native="search()"
+					placeholder="Search"
+					:disabled="!connectedToStrava || itemsLoading > 0"
+					v-model="searchTextCurrent">
+				</b-form-input>
+				&nbsp;
+				<b-button
+					@click="search()"
+					:disabled="!connectedToStrava || itemsLoading > 0"
+					variant="info">
+					Search
+				</b-button>
+				&nbsp;
+			</b-navbar-nav>
+		</b-navbar>
+		<b-tabs pills style="padding: 56px 0px 56px 0px; height: 100%;">
+			<b-tab title="Geo" active>
+				<div id="cesiumContainer"></div>
+			</b-tab>
+			<b-tab title="Activities" style="height: 100%; overflow: scroll; overflow-x: hidden">
+				<div style="font-size: small; color: white; text-align: center;">
+					Page {{activityPage}} of
+					{{Math.floor(activitiesShown / activitiesPerPage) + (activitiesShown % activitiesPerPage > 0 || activitiesShown == 0 ? 1 : 0)}}
+					&nbsp; | &nbsp;
+					Showing {{activitiesShown}} of {{activitiesTotal}} activities
+					<b-link v-if="activitiesShown < activitiesTotal" @click="clearSearch">(clear search)</b-link>
+				</div>
+				<b-table v-if="connectedToStrava"
+					striped
+					hover
+					bordered
+					small
+					dark
+					:items="activityRows"
+					:fields="activityFields"
+					:no-local-sorting="true"
+					:sort-by.sync="sortBy"
+					:sort-desc.sync="sortDesc"
+					:sort-direction="sortDirection"
+					@sort-changed="sortingChanged">
+					<template slot="selected" slot-scope="activity">
+						<b-form-checkbox
+							v-model=activity.item.selected
+							v-if="activity.item.has_geo"
+							:disabled="itemsLoading > 0"
+							@click.native.stop
+							@change="toggleActivity(activity.item, activity.index)">
+						</b-form-checkbox>
+						<div v-else></div>
+					</template>
+					<template slot="name" slot-scope="activity">
+						<b-link
+							target="_blank"
+							style="color: #fc4c02;"
+							:href='"https://www.strava.com/activities/" + activity.item.id'>
+							{{activity.item.name}}
+						</b-link>
+					</template>
+					<template slot="type" slot-scope="activity">
+						<b-badge>{{activity.item.type}}</b-badge>
+					</template>
+					<template slot="distance" slot-scope="activity">
+						{{convertDistance(activity.item.distance)}}
+					</template>
+					<template slot="total_elevation_gain" slot-scope="activity">
+						{{convertElevation(activity.item.total_elevation_gain)}}
+					</template>
+				</b-table>
+				<b-img v-else
+					@click="connectToStrava()"
+					src="images/btn_strava_connectwith_orange.png"
+					nav-item
+					style="cursor: pointer; padding: 10px 0px 0px 10px;">
+				</b-img>
+			</b-tab>
+			<b-tab title="Layers">
+				<div style="padding: 10px 10px 10px 10px;">
+					<b-card
+						style="width: 600px;"
+						bg-variant="dark"
+						text-variant="white"
+						title="Appalachian Trail"
+						sub-title="Toggles Appalachian Trail as a white path (may crash mobile browsers)">
+						<p>
+							<b-button :pressed.sync="showAppalachianTrail"
+								:disabled="itemsLoading > 0"
+								variant="outline-primary">
+								Appalachian Trail
+							</b-button>
+						</p>
+						<b-link
+							target="_blank"
+							href="http://appalachiantrail.org/home/explore-the-trail/gis-data"
+							class="card-link">
+							Source GIS data
+						</b-link>
+						<b-link
+							target="_blank"
+							href="https://donate.appalachiantrail.org/default.aspx?tsid=10414"
+							class="card-link">
+							GIS Data Agreement
+						</b-link>
+					</b-card>
+				</div>
+			</b-tab>
+			<b-tab title="Utilities">
+				<div style="padding: 10px 10px 10px 10px;">
+					<b-card
+						style="width: 600px;"
+						bg-variant="dark"
+						text-variant="white"
+						title="watts/kg calculator"
+						sub-title="Enter your FTP and weight in pounds (lbs)">
+						<p>
+							<b-form-input v-model="ftp" placeholder="FTP"></b-form-input>
+						</p>
+						<p>
+							<b-form-input v-model="weight" placeholder="Weight"></b-form-input>
+						</p>
+						<h2>{{wattsPerKg}}</h2>
+					</b-card>
+				</div>
+			</b-tab>
+			<b-tab title="Settings">
+				<div style="padding: 10px 10px 10px 10px;">
+					<b-card
+						style="width: 600px;"
+						bg-variant="dark"
+						text-variant="white"
+						title="Units"
+						sub-title="Choose between imperial (miles/feet) vs metric (meters/kilometers)">
+						<p>
+							<b-form-group>
+								<b-form-radio-group
+									v-model="selectedUnits"
+									:options="units"
+									name="radio-inline">
+								</b-form-radio-group>
+							</b-form-group>
+						</p>
+					</b-card>
+				</div>
+			</b-tab>
+		</b-tabs>
+		<b-navbar toggleable="md" type="dark" variant="dark" fixed="bottom"></b-navbar>
+	</div>
+	<script src="app.js"></script>
+</body>
+
+</html>

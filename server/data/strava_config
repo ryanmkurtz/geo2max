@@ -1,0 +1,6 @@
+{
+    "client_id": "Fill me in",
+    "client_secret": "Fill me in",
+    "access_token": "Fill me in",
+    "redirect_uri": "https://www.geo2max.com/auth"
+}

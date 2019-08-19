@@ -1,0 +1,18 @@
+{
+  "name": "geo2max",
+  "version": "1.0.0",
+  "description": "Maximal geographic uptake",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ryan Kurtz",
+  "license": "MIT",
+  "dependencies": {
+    "cesium": "^1.54.0",
+    "express": "^4.16.3",
+    "express-session": "^1.15.6",
+    "mongodb": "^3.2.3",
+    "strava-v3": "^1.14.0"
+  }
+}
