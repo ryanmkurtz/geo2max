@@ -106,7 +106,7 @@
 					:sort-desc.sync="sortDesc"
 					:sort-direction="sortDirection"
 					@sort-changed="sortingChanged">
-					<template slot="selected" slot-scope="activity">
+					<template v-slot:cell(selected)="activity">
 						<b-form-checkbox
 							v-model=activity.item.selected
 							v-if="activity.item.has_geo"
@@ -116,7 +116,7 @@
 						</b-form-checkbox>
 						<div v-else></div>
 					</template>
-					<template slot="name" slot-scope="activity">
+					<template v-slot:cell(name)="activity">
 						<b-link
 							target="_blank"
 							style="color: #fc4c02;"
@@ -124,13 +124,13 @@
 							{{activity.item.name}}
 						</b-link>
 					</template>
-					<template slot="type" slot-scope="activity">
+					<template v-slot:cell(type)="activity">
 						<b-badge>{{activity.item.type}}</b-badge>
 					</template>
-					<template slot="distance" slot-scope="activity">
+					<template v-slot:cell(distance)="activity">
 						{{convertDistance(activity.item.distance)}}
 					</template>
-					<template slot="total_elevation_gain" slot-scope="activity">
+					<template v-slot:cell(total_elevation_gain)="activity">
 						{{convertElevation(activity.item.total_elevation_gain)}}
 					</template>
 				</b-table>
