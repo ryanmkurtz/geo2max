@@ -122,22 +122,34 @@ var app = new Vue({
 			fetch("sync", {credentials: "same-origin"})
 			.then((response) => response.json())
 			.then((data) => {
+				var title;
 				var message;
-				if (data.num_inserted > 0) {
-					message = "Added " + data.num_inserted + " new ";
-					if (data.num_inserted == 1) {
-						message += "activity."
-					}
-					else {
-						message += "activities.";
-					}
+				var variant;
+				if (data.error) {
+					title = "Error";
+					message = data.error;
+					variant = "danger";
+					data.total = 0;
 				}
 				else {
-					message = "No new activities.";
+					title = "Synchronize Activities";
+					variant = "success";
+					if (data.num_inserted > 0) {
+						message = "Added " + data.num_inserted + " new ";
+						if (data.num_inserted == 1) {
+							message += "activity."
+						}
+						else {
+							message += "activities.";
+						}
+					}
+					else {
+						message = "No new activities.";
+					}
 				}
 				app.activitiesTotal = data.total;
 				app.activitiesShown = data.total;
-				app.notify("Synchronize Activities", message, "success");
+				app.notify(title, message, variant);
 				app.activityPage = 1;
 				app.searchTextCurrent = "";
 				app.searchTextActive = "";

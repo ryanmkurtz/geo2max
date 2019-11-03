@@ -45,17 +45,22 @@ app.get('/', (req, res) => {
 
 app.get('/connectToStrava', (req, res) => {
 	console.log("/connectToStrava: Redirecting to Strava...");
-	res.redirect(strava.oauth.getRequestAccessURL({}));
+	res.redirect(strava.oauth.getRequestAccessURL({scope:"activity:read"}));
 });
 
 app.get("/auth", (req, res) => {
 	if (!req.query.error) {
 		console.log("/auth: Authorization succeeded!");
 		strava.oauth.getToken(req.query.code, (err, payload) => {
-			if (payload && payload.access_token) {
-				req.session.access_token = payload.access_token;
-				req.session.athlete = payload.athlete;
+			if (!err && payload && payload.body && payload.body.access_token) {
+				req.session.access_token = payload.body.access_token;
+				req.session.athlete = payload.body.athlete;
 				res.sendFile(path.join(__dirname, '/../client/app.html'));
+			}
+			else {
+				console.error("Authorization failed!");
+				res.write("Authorization failed!");
+				res.end();
 			}
 		});
 	}
@@ -70,18 +75,6 @@ app.get("/checkStravaAuth", (req, res) => {
 	console.log("/checkStravaAuth: " + req.session.access_token);
 	res.write(JSON.stringify(req.session.access_token != undefined));
 	res.end();
-});
-
-app.get("/athlete", (req, res) => {
-	console.log("/athlete");
-	strava.athlete.get({
-		'access_token': req.session.access_token
-	}, (err, payload, limits) => {
-		if (payload) {
-			res.write(JSON.stringify(payload));
-			res.end();
-		}
-	});
 });
 
 app.get("/activities", (req, res) => {
@@ -149,6 +142,12 @@ app.get("/sync", (req, res) => {
 			'page': page,
 			'per_page': 200
 		}, (err, payload, limits) => {
+			if (err) {
+				console.log(err.error);
+				res.write(JSON.stringify({error: err.error.message}));
+				res.end();
+				return;
+			}
 			var activities = payload;
 			var done = false;
 			if (activities && activities.length > 0) {
