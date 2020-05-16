@@ -81,6 +81,7 @@ var app = new Vue({
 					for (var entity of dataSource.entities.values) {
 						if (Cesium.defined(entity.polyline)) {
 							entity.polyline.clampToGround = true;
+							entity.polyline.arcType = Cesium.ArcType.GEODESIC;
 							entity.polyline.width = 2;
 							entity.polyline.material = Cesium.Color.WHITE;
 						}
