@@ -105,7 +105,8 @@
 					:sort-by.sync="sortBy"
 					:sort-desc.sync="sortDesc"
 					:sort-direction="sortDirection"
-					@sort-changed="sortingChanged">
+					@sort-changed="sortingChanged"
+					:busy="itemsLoading > 0">
 					<template v-slot:cell(selected)="activity">
 						<b-form-checkbox
 							v-model=activity.item.selected
@@ -204,6 +205,24 @@
 									:options="units"
 									name="radio-inline">
 								</b-form-radio-group>
+							</b-form-group>
+						</p>
+					</b-card>
+				</div>
+				<div style="padding: 10px 10px 10px 10px;">
+					<b-card
+						style="width: 600px;"
+						bg-variant="dark"
+						text-variant="white"
+						title="Custom Field"
+						sub-title="Customize the last field of the activities table">
+						<p>
+							<b-form-group>
+								<b-form-select
+									v-model="customFieldCurrent"
+									:options="customFieldOptions"
+									@change="getActivities">
+								</b-form-select>
 							</b-form-group>
 						</p>
 					</b-card>

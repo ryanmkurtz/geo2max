@@ -23,7 +23,9 @@ var app = new Vue({
 		ftp: "",
 		weight: "",
 		units: ["imperial", "metric"],
-		selectedUnits: "imperial"
+		selectedUnits: "imperial",
+		customFieldCurrent: "None",
+		customFieldOptions: []
 	},
 	visibleDataSources: {},
 	visibleEntities: {},
@@ -79,7 +81,7 @@ var app = new Vue({
 					for (var entity of dataSource.entities.values) {
 						if (Cesium.defined(entity.polyline)) {
 							entity.polyline.clampToGround = true;
-							entity.polyline.width = 2,
+							entity.polyline.width = 2;
 							entity.polyline.material = Cesium.Color.WHITE;
 						}
 					}
@@ -195,6 +197,21 @@ var app = new Vue({
 				}
 				app.activities = data.activities;
 				app.activitiesShown = data.total;
+				app.customFieldOptions = [];
+				var fieldSet = new Set();
+				for (var i = 0; i < app.activities.length; i++) {
+					for (var field in app.activities[i]) {
+						fieldSet.add(field);
+					}
+				}
+				for (var field of fieldSet) {
+					var display = field.replace(/_/g, " ");
+					display = display.charAt(0).toUpperCase() + display.slice(1);
+					app.customFieldOptions.push({"value": field, "text": display});
+				}
+				app.customFieldOptions = app.customFieldOptions.sort(function(a, b) {
+					return a.value.localeCompare(b.value)
+				});
 				app.activityFields = [
 					{key: "selected", label: "Geo", "class": "text-center"},
 					{key: "name", label: "Name", sortable: true},
@@ -206,7 +223,7 @@ var app = new Vue({
 					{key: "pr_count", label: "PR's", sortable: true},
 					{key: "kudos_count", label: "Kudos", sortable: true},
 					{key: "comment_count", label: "Comments", sortable: true},
-					{key: "total_photo_count", label: "Photos", sortable: true}
+					{key: app.customFieldCurrent, label: "Custom", sortable: true, thStyle: "background-color: #fc4c02"}
 				];
 				app.activityRows = [];
 				for (var activity of app.activities) {
@@ -225,7 +242,7 @@ var app = new Vue({
 						"pr_count": activity.pr_count,
 						"kudos_count": activity.kudos_count,
 						"comment_count": activity.comment_count,
-						"total_photo_count": activity.total_photo_count,
+						[app.customFieldCurrent]: activity[app.customFieldCurrent],
 						"id": activity.id,
 						"has_geo": activity.start_latitude != null
 					});
