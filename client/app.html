@@ -171,6 +171,28 @@
 						</b-link>
 					</b-card>
 				</div>
+				<div style="padding: 10px 10px 10px 10px;">
+					<b-card
+						style="width: 600px;"
+						bg-variant="dark"
+						text-variant="white"
+						title="Blue Ridge Parkway"
+						sub-title="Toggles Blue Ridge Parkway as a blue path">
+						<p>
+							<b-button :pressed.sync="showBlueRidgeParkway"
+								:disabled="itemsLoading > 0"
+								variant="outline-primary">
+								Blue Ridge Parkway
+							</b-button>
+						</p>
+						<b-link
+							target="_blank"
+							href="https://en.wikipedia.org/wiki/Blue_Ridge_Parkway"
+							class="card-link">
+							Source GIS data
+						</b-link>
+					</b-card>
+				</div>
 			</b-tab>
 			<b-tab title="Utilities">
 				<div style="padding: 10px 10px 10px 10px;">

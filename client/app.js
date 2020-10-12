@@ -15,6 +15,7 @@ var app = new Vue({
 		activitiesTotal: 0,
 		activitiesShown: 0,
 		showAppalachianTrail: false,
+		showBlueRidgeParkway: false,
 		searchTextCurrent: "",
 		searchTextActive: "",
 		sortBy: "start_date",
@@ -95,6 +96,35 @@ var app = new Vue({
 			else {
 				app.cesium.dataSources.remove(app.$options.visibleDataSources.appalachianTrail, true);
 				delete app.$options.visibleDataSources.appalachianTrail;
+				app.itemsLoading--;
+			}
+		},
+
+		// Toggles drawing the Blue Ridge Parkway
+		showBlueRidgeParkway: function () {
+			app.itemsLoading++;
+			if (app.showBlueRidgeParkway) {
+				Cesium.KmlDataSource.load("data/brp.kml", {
+					camera: app.cesium.scene.camera,
+					canvas: app.cesium.scene.canvas
+				}).then(function(dataSource) {
+					for (var entity of dataSource.entities.values) {
+						if (Cesium.defined(entity.polyline)) {
+							entity.polyline.clampToGround = true;
+							entity.polyline.arcType = Cesium.ArcType.GEODESIC;
+							entity.polyline.width = 2;
+							entity.polyline.material = Cesium.Color.LIGHTSKYBLUE;
+						}
+					}
+					app.cesium.dataSources.add(dataSource).then(function(dataSource) {
+						app.$options.visibleDataSources["bwp"] = dataSource;
+						app.itemsLoading--;
+					});
+				});
+			}
+			else {
+				app.cesium.dataSources.remove(app.$options.visibleDataSources.bwp, true);
+				delete app.$options.visibleDataSources.bwp;
 				app.itemsLoading--;
 			}
 		}
@@ -260,8 +290,9 @@ var app = new Vue({
 				app.activityRows[i].selected = false;
 			}
 
-			// Toggle appalachian trail off
+			// Toggle layers off
 			app.showAppalachianTrail = false;
+			app.showBlueRidgeParkway = false;
 
 			// Clear everything else
 			app.cesium.entities.removeAll(true);
