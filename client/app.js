@@ -428,7 +428,7 @@ var app = new Vue({
 		// Called when user toggles an activity checkbox in the activities table
 		toggleActivity: function(record, index) {
 
-			var selected = !record.selected;
+			var selected = record.selected;
 			var activity = app.activities[index];
 
 			if (!selected) {
