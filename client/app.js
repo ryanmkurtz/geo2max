@@ -261,7 +261,6 @@ var app = new Vue({
 					var date = new Date(activity.start_date_local);
 					var movingTime = new Date(null);
 					movingTime.setSeconds(activity.moving_time);
-
 					app.activityRows.push({
 						"selected": app.$options.visibleEntities.hasOwnProperty(activity.id),
 						"name": activity.name,
@@ -275,7 +274,7 @@ var app = new Vue({
 						"comment_count": activity.comment_count,
 						[app.customFieldCurrent]: activity[app.customFieldCurrent],
 						"id": activity.id,
-						"has_geo": activity.start_latitude != null
+						"has_geo": activity.start_latlng != null
 					});
 				}
 				app.itemsLoading--;
